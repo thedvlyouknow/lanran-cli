@@ -149,8 +149,12 @@ def generate_all_random(frames: list, weapons: list, systems: list, save):
 	"--load",
 	help="file to load a previous run from"
 )
+@click.option(
+	"--lcp-data",
+	help="additional data from other LCPs"
+)
 @pass_environment
-def cli(ctx, save, no_save, load):
+def cli(ctx, save, no_save, load, lcp_data):
 	"""A sample cli tool to generate groups of random frames, weapons, and systems for lancer TTPG"""
 	# Load core data
 	core_frames_url = "https://raw.githubusercontent.com/massif-press/lancer-data/master/lib/frames.json"
@@ -175,20 +179,21 @@ def cli(ctx, save, no_save, load):
 	 	if i["name"] != "ERR: DATA NOT FOUND":
 	 		ctx.systems.append(i)
 
-	# load extra content
-	extra_content_file = open('non_core_data.json')
-	extra_content_data = json.load(extra_content_file)
+	# load extra content if provided
+	if lcp_data is not None:
+		extra_content_file = open(lcp_data)
+		extra_content_data = json.load(extra_content_file)
 
-	for entry in extra_content_data:
-		entry_frames = entry["data"]["frames"]
-		for extra_frame in entry_frames:
-			ctx.frames.append(extra_frame)
-		entry_weapons = entry["data"]["weapons"]
-		for extra_weapon in entry_weapons:
-			ctx.weapons.append(extra_weapon)
-		entry_systems = entry["data"]["systems"]
-		for extra_system in entry_systems:
-			ctx.systems.append(extra_system)
+		for entry in extra_content_data:
+			entry_frames = entry["data"]["frames"]
+			for extra_frame in entry_frames:
+				ctx.frames.append(extra_frame)
+			entry_weapons = entry["data"]["weapons"]
+			for extra_weapon in entry_weapons:
+				ctx.weapons.append(extra_weapon)
+			entry_systems = entry["data"]["systems"]
+			for extra_system in entry_systems:
+				ctx.systems.append(extra_system)
 
 	if load is not None:
 		json_to_load = open(load)
