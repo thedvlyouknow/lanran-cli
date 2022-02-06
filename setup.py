@@ -7,7 +7,7 @@ setup(
     author_email = 'thedvlyouknow@protonmail.com',
     license = 'MIT license',
     description = 'A command line tool to generate random groups of lancer componants for scavenger style play',
-    url = '<github url where the tool code will remain>',
+    url = 'https://github.com/thedvlyouknow/lanran-cli',
     py_modules=['lanran'],
     install_requires=[
         'Click',
