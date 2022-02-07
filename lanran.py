@@ -11,6 +11,17 @@ class Environment:
 
 pass_environment = click.make_pass_decorator(Environment, ensure=True)
 
+def getCompanyColor(company:str):
+	company_colors = {
+		"GMS": "bright_red",
+		"HA": "bright_magenta",
+		"SSC": "bright_yellow",
+		"IPS-N": "bright_cyan",
+		"HORUS": "green",
+		"IC": "bright_green"
+	}
+	return company_colors[company] or "white"
+
 # Function that joins the list of frame types
 def getFrameTypes(frame_data: list):
 	return '/'.join(frame_data)
@@ -52,28 +63,30 @@ def randomize_systems(system_data: list, max_license_level: int, number_to_pick:
 # Function that prints the lists of randomly generated gear
 def print_overview(frames: list, weapons: list, systems: list):
 	# Frames: frame name | frame types
-	click.echo(f"""Frames({len(frames)})
-------""")
+	click.echo(click.style(f"""Frames({len(frames)})
+------""", fg='white', bold=True))
 	for frame in frames:
-		click.echo(f'{frame["source"]} {frame["name"]} | {getFrameTypes(frame["mechtype"])}')
-	click.echo(f"""
+		click.echo(click.style(f'{frame["source"]} {frame["name"]} | {getFrameTypes(frame["mechtype"])}', fg=getCompanyColor(frame["source"])))
+	click.echo(click.style(f"""
 Weapons({len(weapons)})
-------""")
+------""",fg='white', bold=True))
 	# Weapons: weapon name | weapon source
 	for weapon in weapons:
 		if 'license' in weapon:
-			click.echo(f'{weapon["name"]} | {weapon["source"]} {weapon["license"]} {str(weapon["license_level"])}')
+			weapon_to_print = f'{weapon["name"]} | {weapon["source"]} {weapon["license"]} {str(weapon["license_level"])}'
 		else:
-			click.echo(f'{weapon["name"]} | {weapon["source"]}')
+			weapon_to_print = f'{weapon["name"]} | {weapon["source"]}'
+		click.echo(click.style(weapon_to_print, fg=getCompanyColor(weapon["source"])))
 	# Systems: system name | system source
-	click.echo(f"""
+	click.echo(click.style(f"""
 Systems({len(systems)})
-------""")
+------""",fg='white', bold=True))
 	for system in systems:
 		if 'license' in system:
-			click.echo(f'{system["name"]} | {system["source"]} {system["license"]} {str(system["license_level"])}')
+			system_to_print = f'{system["name"]} | {system["source"]} {system["license"]} {str(system["license_level"])}'
 		else: 
-			click.echo(f'{system["name"]} | {system["source"]}')
+			system_to_print = f'{system["name"]} | {system["source"]}'
+		click.echo(click.style(system_to_print, fg=getCompanyColor(system["source"])))
 
 # Function that prints out individual frame deatils for better reading comprehension
 def print_frame_details(frames: list):
@@ -98,13 +111,13 @@ Stats:
     Save: {stats["save"]}
 
 ''')
-		print("Traits:")
+		click.echo("Traits:")
 		for trait in frame['traits']:
 			print(
 f'''  {trait["name"]}:
   {trait["description"]}
 ''')
-		print(f'''Core System:
+		click.echo(f'''Core System:
 {frame["core_system"]["name"]}:
   Active name: {frame["core_system"]["active_name"]}
   Active effect: {frame["core_system"]["active_effect"]}
@@ -133,28 +146,29 @@ def generate_all_random(frames: list, weapons: list, systems: list, save):
 
 	return {"frames":random_frames,"weapons":random_weapons,"systems":random_systems}
 	
+@click.group()
+def cli():
+	pass
 
 @click.command()
 @click.version_option(version="0.1")
 @click.option(
 	"--save",
+	"-s",
 	help="stores your full json output at this location"
 )
 @click.option(
 	"--no-save",
 	help="Does not save a copy of any data generated to local storage",
-	is_flag = True,
+	is_flag = True
 )
 @click.option(
-	"--load",
-	help="file to load a previous run from"
-)
-@click.option(
-	"--lcp-data",
+	"--lcp-data", 
+	"-d",
 	help="additional data from other LCPs"
 )
 @pass_environment
-def cli(ctx, save, no_save, load, lcp_data):
+def randomize(ctx, save, no_save, lcp_data):
 	"""A sample cli tool to generate groups of random frames, weapons, and systems for lancer TTPG"""
 	# Load core data
 	core_frames_url = "https://raw.githubusercontent.com/massif-press/lancer-data/master/lib/frames.json"
@@ -195,12 +209,7 @@ def cli(ctx, save, no_save, load, lcp_data):
 			for extra_system in entry_systems:
 				ctx.systems.append(extra_system)
 
-	if load is not None:
-		json_to_load = open(load)
-		data = json.load(json_to_load)
-		print_overview(data["frames"], data["weapons"], data["systems"])
-	else:
-		data = generate_all_random(ctx.frames, ctx.weapons, ctx.systems,save)
+	data = generate_all_random(ctx.frames, ctx.weapons, ctx.systems,save)
 
 	if save is not None:
 		with open(save, 'w') as outfile:
@@ -209,4 +218,39 @@ def cli(ctx, save, no_save, load, lcp_data):
 		with open('lancer-random-data.json', 'w') as outfile:
 			json.dump(data, outfile)
 
-	
+@click.command()
+@click.argument(
+	"json-file", type=click.Path(), nargs=1
+)
+@click.option(
+	"--lcp-data",
+	help="additional data from other LCPs"
+)
+@click.option(
+	"-fd", 
+	"--frame-details", 
+	is_flag= True,
+	help="print additional frame details"
+)
+@click.option(
+	"-wd", 
+	"--weapon-details", 
+	is_flag= True,
+	help="print additional weapon details"
+)
+@click.option(
+	"-sd", 
+	"--system-details", 
+	is_flag= True,
+	help="print additional frame details"
+)
+def details(json_file, lcp_data, frame_details):
+	json_to_load = open(json_file)
+	data = json.load(json_to_load)
+	if frame_details:
+		print_frame_details(data["frames"])
+	else:
+		print_overview(data["frames"], data["weapons"], data["systems"])
+
+cli.add_command(details)
+cli.add_command(randomize)
