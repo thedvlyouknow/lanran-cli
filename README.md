@@ -2,7 +2,7 @@
 A command line tool to generate random groups of lancer componants for scavenger style play
 
 # A note on data
-This tool pulls core resources from `mastiff-press/lancer-data` and is able to support additional data pulled out of compcon.  I'm not including any of that data in this repo, but if you want additional resources from other LCPs pull the json from compcon to your local machine and pass it in.
+This tool pulls core resources from `mastiff-press/lancer-data` and is able to support additional data pulled out of compcon.  I'm not including any of that data in this repo, but if you want additional resources from other LCPs pull the `extra_resources.json` file from compcon to your local storage and pass it in using the `-d` argument.
 
 # Installation
 Using python 3.7 or above:
